@@ -12,7 +12,7 @@ def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
     setup_db(app)
-    app.secret_key = "THIS IS A SECRET KEY"
+    app.secret_key = os.environ.get("SECRET")
     '''
     @DONE: Set up CORS. Allow '*' for origins.
     Delete the sample route after completing the TODOs
@@ -282,3 +282,5 @@ def create_app(test_config=None):
         }), 500
 
     return app
+
+app = create_app()

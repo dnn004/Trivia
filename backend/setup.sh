@@ -1,0 +1,2 @@
+export DATABASE_URL="postgres://fquifrccazykar:212a989012ee8a4c64b04daab644edd4ce30134439f49021e59d20872d725189@ec2-54-224-124-241.compute-1.amazonaws.com:5432/d35cbu3utmc1e7"
+export SECRET='secretKEY'
