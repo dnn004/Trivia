@@ -1,4 +1,4 @@
-# Full Stack API Final Project
+# Full Stack Nanodegree Program
 
 ## Full Stack Trivia
 
