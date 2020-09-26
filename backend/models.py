@@ -4,8 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 import json
 
 database_name = "trivia"
-#database_path = "postgres://{}/{}".format(':5433', database_name)
-database_path = os.environ.get("DATABASE_URL")
+database_path = "postgres://{}/{}".format(':5433', database_name)
+#database_path = os.environ.get("DATABASE_URL")
 
 db = SQLAlchemy()
 
@@ -18,20 +18,48 @@ def setup_db(app, database_path=database_path):
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
     db.init_app(app)
-    db.create_all()
 
+'''
+Category
+
+'''
+class Category(db.Model):  
+
+  id = Column(Integer, primary_key=True)
+  type = Column(String)
+  questions = db.relationship('Question', backref='category', lazy=True)
+
+  def __init__(self, type):
+    self.type = type
+
+  def insert(self):
+    db.session.add(self)
+    db.session.commit()
+  
+  def update(self):
+    db.session.commit()
+
+  def delete(self):
+    db.session.delete(self)
+    db.session.commit()
+
+  def format(self):
+    return {
+      'id': self.id,
+      'type': self.type
+    }
+    
 '''
 Question
 
 '''
 class Question(db.Model):  
-  __tablename__ = 'questions'
 
   id = Column(Integer, primary_key=True)
   question = Column(String)
   answer = Column(String)
-  category = Column(String)
   difficulty = Column(Integer)
+  category_id = Column(Integer, db.ForeignKey('category.id'), nullable=False)
 
   def __init__(self, question, answer, category, difficulty):
     self.question = question
@@ -55,25 +83,6 @@ class Question(db.Model):
       'id': self.id,
       'question': self.question,
       'answer': self.answer,
-      'category': self.category,
+      'category': int(self.category.format()["id"]),
       'difficulty': self.difficulty
-    }
-
-'''
-Category
-
-'''
-class Category(db.Model):  
-  __tablename__ = 'categories'
-
-  id = Column(Integer, primary_key=True)
-  type = Column(String)
-
-  def __init__(self, type):
-    self.type = type
-
-  def format(self):
-    return {
-      'id': self.id,
-      'type': self.type
     }

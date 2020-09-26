@@ -11,13 +11,14 @@ QUESTIONS_PER_PAGE = 10
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
+    from models import Question, Category
     setup_db(app)
     app.secret_key = os.environ.get("SECRET")
     '''
     @DONE: Set up CORS. Allow '*' for origins.
     Delete the sample route after completing the TODOs
     '''
-    cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+    cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
     '''
     @DONE: Use the after_request decorator to set Access-Control-Allow
@@ -39,7 +40,7 @@ def create_app(test_config=None):
     Create an endpoint to handle GET requests
     for all available categories.
     '''
-    @app.route('/api/categories', methods=['GET'])
+    @app.route('/categories', methods=['GET'])
     def get_categories():
         try:
             categories = Category.query.all()
@@ -68,7 +69,7 @@ def create_app(test_config=None):
     the screen for three pages. Clicking on the page numbers
     should update the questions.
     '''
-    @app.route('/api/questions', methods=['GET'])
+    @app.route('/questions', methods=['GET'])
     def get_questions():
         # Pagination of questions with 10 questions per page
         page = request.args.get('page', 1, type=int)
@@ -81,15 +82,11 @@ def create_app(test_config=None):
             formatted_categories = [
                 category.format()["type"] for category in categories
             ]
-            current_category = Category.query.get(
-                formatted_questions[start]['category']
-            ).format()
             return jsonify({
                 'success': True,
                 'questions': formatted_questions[start:end],
                 'total_questions': len(formatted_questions),
-                'categories': formatted_categories,
-                'current_category': current_category["type"]
+                'categories': formatted_categories
             })
         except:
             abort(404)
@@ -102,7 +99,7 @@ def create_app(test_config=None):
     will be removed. This removal will persist in the database and when
     you refresh the page.
     '''
-    @app.route('/api/questions/<question_id>', methods=['DELETE'])
+    @app.route('/questions/<question_id>', methods=['DELETE'])
     def delete_question(question_id):
         # Delete question with question_id
         try:
@@ -125,17 +122,18 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the
     end of the last page of the questions list in the "List" tab.
     '''
-    @app.route('/api/questions', methods=['POST'])
+    @app.route('/questions', methods=['POST'])
     def post_question():
         question = request.json['question']
         answer = request.json['answer']
         difficulty = request.json['difficulty']
-        category = request.json['category']
+        category_id = request.json['category_id']
 
         # Question input without question or answer is unacceptable
         if not question or not answer:
             abort(400)
         try:
+            category = Category.query.get(category_id)
             question = Question(
                 question=question,
                 answer=answer,
@@ -143,12 +141,54 @@ def create_app(test_config=None):
                 category=category
             )
             question.insert()
+            # category.questions.append(question)
             return jsonify({
                 "success": True,
                 "question_id": question.id
             })
         except:
             abort(422)
+    
+    '''
+    @DONE:
+    Create an endpoint to POST a new category
+
+    '''
+    @app.route('/categories', methods=['POST'])
+    def post_category():
+        category_type = request.json['type']
+        # Question input without question or answer is unacceptable
+        if not category_type:
+            abort(400)
+        try:
+            category = Category(
+                type=category_type
+            )
+            category.insert()   
+            return jsonify({
+                "success": True,
+                "category_id": category.id
+            })
+        except:
+            abort(422)
+
+    '''
+    @DONE:
+    Create an endpoint to DELETE question using a category ID.
+
+    '''
+    @app.route('/categories/<category_id>', methods=['DELETE'])
+    def delete_category(category_id):
+        # Delete category with category_id
+        try:
+            category = Category.query.get(category_id)
+            category.delete()
+            return jsonify({
+                "success": True,
+                "id": category_id
+            })
+        except:
+            abort(404)
 
     '''
     @DONE:
@@ -160,7 +200,7 @@ def create_app(test_config=None):
     only question that include that string within their question.
     Try using the word "title" to start.
     '''
-    @app.route('/api/questions/search', methods=['POST'])
+    @app.route('/questions/search', methods=['POST'])
     def search():
         searchTerm = request.json['searchTerm']
         questions = Question.query.filter(
@@ -183,10 +223,10 @@ def create_app(test_config=None):
     categories in the left column will cause only questions of that
     category to be shown.
     '''
-    @app.route('/api/categories/<category_id>/questions', methods=['GET'])
+    @app.route('/categories/<category_id>/questions', methods=['GET'])
     def get_questions_by_category(category_id):
         try:
-            questions = Question.query.filter_by(category=category_id)
+            questions = Question.query.filter_by(category_id=category_id)
             current_category = Category.query.get(category_id)
             formatted_questions = [question.format() for question in questions]
             return jsonify({
@@ -209,7 +249,7 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     '''
-    @app.route('/api/quizzes', methods=['POST'])
+    @app.route('/quizzes', methods=['POST'])
     def post_quizzes():
         previous_questions = request.json['previous_questions']
         quiz_category = request.json['quiz_category']
@@ -218,7 +258,7 @@ def create_app(test_config=None):
         if int(quiz_category["id"]) != 0:
             # If quiz_category is all of the categories
             questions = Question.query.filter_by(
-                category=int(quiz_category["id"])
+                category_id=int(quiz_category["id"])
             )
             indices = list(range(questions.count()))
         else:
