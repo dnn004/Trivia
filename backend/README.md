@@ -1,5 +1,9 @@
 # Full Stack Trivia API Backend
 
+## API Deployed on Heroku
+
+https://fsnd-trivia-app.herokuapp.com/
+
 ## Getting Started
 
 ### Installing Dependencies
@@ -51,10 +55,6 @@ flask run
 Setting the `FLASK_ENV` variable to `development` will detect file changes and restart the server automatically.
 
 Setting the `FLASK_APP` variable to `app` directs flask to use the `app` directory and the `__init__.py` file to find the application. 
-
-## API Deployed on Heroku
-
-https://fsnd-trivia-app.herokuapp.com/
 
 ## Tasks
 
